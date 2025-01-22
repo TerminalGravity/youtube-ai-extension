@@ -1,0 +1,28 @@
+# Features: Adding o1 model to the extension 
+
+## Objectives
+- First objective
+- Second objective
+- Third objective
+
+## Context
+/add first_file_path
+/add second_file_path
+/add third_file_path
+
+/read-only reference_file_path1
+/read-only reference_file_path2
+/read-only reference_file_path3
+
+## Implementation Notes
+- Be sure to implement every step in the order given
+- Be sure to fulfil every detail of every task
+- Don't skip over any details. Implement everything that was asked for.
+
+## Low-Level Tasks
+> Ordered from start to finish.
+> Generate edits one at a time so we don't overlap any changes.
+
+1. First task
+2. Second task
+3. Third task

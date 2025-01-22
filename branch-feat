@@ -1,0 +1,52 @@
+## Title: Adding o1-mini LLM to the extension
+
+feat. branch #1: add @OpenAI o1-mini model to model selection, add persona-based prompt templates for summary, e.g., "Elon" persona.
+
+## Objectives
+1. Integrate @OpenAI o1-mini model as an additional selectable LLM.
+2. Expand the summary feature with new prompt templates (including persona-based options, e.g., "Elon").
+3. Implement flexible prompt handling so users can choose different summary types (technical, casual, "Elon," etc.).
+
+## Context
+- We already have a model selection UI using a dropdown (e.g., GPT-3.5, GPT-4). We need to add o1-mini to that list.  
+- The summary component supports a default prompt; we will enhance it with multiple templates.  
+- Each prompt template can be labeled and describe how to summarize the video (e.g., "Summarize as Elon Musk," "Summarize in a casual style," etc.).  
+
+Below are the primary files where changes will take place for this update:
+/add lib/constants.tsx (adding o1-mini to the model list and new persona prompts)
+/add contexts/summary-context.tsx (handling new prompt and model selection logic)
+/add components/summary-actions.tsx (exposing the new selection in the UI dropdown)
+/add components/summary-content.tsx (ensuring any new persona prompt changes are reflected in the rendered content)
+
+## Implementation Details
+- Update the model configuration in lib/constants.tsx to include o1-mini.  
+- Add persona-based prompts alongside existing prompt templates. For example:  
+  - "Elon" persona: Summarize the video as if you are Elon Musk, focusing on technology, innovation, etc.  
+  - "Academic" persona: Summarize with a formal, academic tone.  
+  - "Casual" persona: Summarize in a friendly, conversational manner.  
+- In summary-context.tsx, detect which template is selected from the new persona dropdown and include it as part of the final prompt.  
+- Ensure that the new model (o1-mini) and persona-prompts are backward compatible with existing logic.  
+
+## Constraints/Requirements
+- Must fully maintain existing functionality for GPT-based models.  
+- Persona prompts should be easy to configure or extend.  
+- The user should see minimal performance overhead when using o1-mini.  
+
+## Testing & Validation
+- Verify that the Summary panel updates correct scripts when choosing o1-mini.  
+- Validate persona prompt output in a variety of test scenarios.  
+- Confirm that the user can revert to default prompts.  
+- Confirm that all new calls handle errors gracefully.  
+
+## Notes & References
+- @OpenAI documentation for o1-mini usage.  
+- Existing line of models in constants.tsx.  
+- Persona-based prompt references from standard prompt engineering practices.  
+
+--------------------------------------------------
+### Aider In-Chat Commands (Reminder)
+- /load <filename>        (Load additional snippet or context)
+- /reset                  (Clear current conversation context)
+- /chat "Message"        (Send a direct message or request)
+- /revert                 (Undo the last code changes)
+- /done                   (End the Aider session)
