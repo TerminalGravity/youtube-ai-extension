@@ -1,0 +1,14 @@
+{
+  "manifest": {
+    "name": "YouTube AI (Test)",
+    "version": "0.0.1-test",
+    "permissions": ["storage", "activeTab"],
+    "host_permissions": ["*://*.youtube.com/*"],
+    "web_accessible_resources": [
+      {
+        "resources": ["test.html"],
+        "matches": ["<all_urls>"]
+      }
+    ]
+  }
+} 

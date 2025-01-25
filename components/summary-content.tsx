@@ -26,7 +26,10 @@ export default function SummaryContent() {
   }
 
   return (
-    <div className="flex justify-center items-center w-full p-3 bg-white dark:bg-[#0f0f0f]">
+    <div 
+      data-testid="summary-content"
+      className="flex justify-center items-center w-full p-3 bg-white dark:bg-[#0f0f0f]"
+    >
       <div className="h-[600px] w-full px-3 opacity-80">
         <Markdown markdown={summaryContent} className="pb-6" />
       </div>

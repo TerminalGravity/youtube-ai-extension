@@ -1,6 +1,14 @@
 import { createLlm } from "@/utils/llm"
+import type { ChatCompletionMessageParam, ChatCompletionSystemMessageParam, ChatCompletionUserMessageParam } from "openai/resources"
 
 import type { PlasmoMessaging } from "@plasmohq/messaging"
+
+function extractKeyMoments(transcript: string): string {
+  // Simple extraction of first few sentences as key moments
+  const sentences = transcript.split(/[.!?]+/).filter(s => s.trim().length > 0)
+  const keyMoments = sentences.slice(0, 3).join('. ')
+  return keyMoments || 'No key moments identified'
+}
 
 // const SYSTEM = "Given the transcript of a YouTube video along with relevant video metadata (such as video title, description), produce contextually relevant content as requested by the user. The output should be engaging and informative."
 
@@ -22,9 +30,13 @@ Task Requirements:
 4. Provide confidence estimates for key points`
 
 async function createCompletion(model: string, prompt: string, context: any) {
+  console.log("[Completion] Starting with model:", model)
   const llm = createLlm(context.openAIKey)
 
-  console.log("Creating Chat Completion")
+  if (!context?.transcript?.events) {
+    console.error("[Completion] No transcript available")
+    throw new Error("No transcript available")
+  }
 
   const parsed = context.transcript.events
     .filter((x: { segs: any }) => x.segs)
@@ -33,21 +45,39 @@ async function createCompletion(model: string, prompt: string, context: any) {
     .replace(/[\u200B-\u200D\uFEFF]/g, "")
     .replace(/\s+/g, " ")
 
-  const USER = CONTEXT_TEMPLATE
-    .replace('{title}', context.metadata.title)
-    .replace('{length}', context.metadata.duration)
-    .replace('{date}', context.metadata.date)
+  const contextMessage = CONTEXT_TEMPLATE
+    .replace('{title}', context.metadata?.title || 'Unknown')
+    .replace('{length}', context.metadata?.duration || 'Unknown')
+    .replace('{date}', context.metadata?.date || 'Unknown')
     .replace('{key_moments}', extractKeyMoments(parsed))
     .replace('{transcript}', parsed)
 
-  console.log("User Prompt")
-  console.log(USER)
+  console.log("[Completion] Context and prompt prepared")
 
-  return llm.beta.chat.completions.stream({
-    messages: [{ role: "user", content: USER }],
-    model: model || "gpt-3.5-turbo",
-    stream: true
-  })
+  // Different message format for o1-mini vs other models
+  const messages: ChatCompletionMessageParam[] = model === "o1-mini" 
+    ? [
+        // o1-mini doesn't support system messages
+        { role: "user", content: `${contextMessage}\n\n${prompt}` } as ChatCompletionUserMessageParam
+      ]
+    : [
+        { role: "system", content: "You are a helpful AI assistant that summarizes video content." } as ChatCompletionSystemMessageParam,
+        { role: "user", content: contextMessage } as ChatCompletionUserMessageParam,
+        { role: "user", content: prompt } as ChatCompletionUserMessageParam
+      ];
+
+  console.log("[Completion] Using messages format:", JSON.stringify(messages, null, 2))
+
+  try {
+    return llm.beta.chat.completions.stream({
+      messages,
+      model,
+      stream: true
+    })
+  } catch (error) {
+    console.error("[Completion] OpenAI API error:", error)
+    throw error
+  }
 }
 
 const handler: PlasmoMessaging.PortHandler = async (req, res) => {
@@ -57,26 +87,45 @@ const handler: PlasmoMessaging.PortHandler = async (req, res) => {
   const model = req.body.model
   const context = req.body.context
 
-  // console.log("Prompt")
-  // console.log(prompt)
-  // console.log("Model")
-  // console.log(model)
-  // console.log("Context")
-  // console.log(context)
+  console.log("[Handler] Received request:", { 
+    model, 
+    promptLength: prompt?.length,
+    hasContext: !!context,
+    hasTranscript: !!context?.transcript
+  })
+
+  if (!context?.openAIKey) {
+    console.error("[Handler] Missing OpenAI key")
+    res.send({ error: "OpenAI key is required", isEnd: true })
+    return
+  }
 
   try {
     const completion = await createCompletion(model, prompt, context)
 
     completion.on("content", (delta, snapshot) => {
       cumulativeDelta += delta
-      res.send({ message: cumulativeDelta, error: "", isEnd: false })
+      res.send({ message: cumulativeDelta, error: null, isEnd: false })
     })
 
     completion.on("end", () => {
-      res.send({ message: "END", error: "", isEnd: true })
+      console.log("[Handler] Completion finished successfully")
+      res.send({ message: cumulativeDelta, error: null, isEnd: true })
+    })
+
+    completion.on("error", (error) => {
+      console.error("[Handler] Stream error:", error)
+      res.send({ 
+        error: `OpenAI API Error: ${error.message}\nDetails: ${JSON.stringify(error, null, 2)}`, 
+        isEnd: true 
+      })
     })
   } catch (error) {
-    res.send({ error: "something went wrong" })
+    console.error("[Handler] Request error:", error)
+    res.send({ 
+      error: `Handler Error: ${error.message}\nStack: ${error.stack}`, 
+      isEnd: true 
+    })
   }
 }
 

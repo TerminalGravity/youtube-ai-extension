@@ -6,6 +6,8 @@ import * as React from "react"
 import { usePort } from "@plasmohq/messaging/hook"
 
 import { useExtension } from "./extension-context"
+import { experimentalFeaturesAtom } from "@/lib/atoms/experimental-features"
+import { FEATURES } from "@/lib/feature-flags"
 
 interface SummaryContext {
   summaryModel: Model
@@ -38,6 +40,7 @@ interface SummaryProviderProps {
 export function SummaryProvider({ children }: SummaryProviderProps) {
   const port = usePort("completion")
   const openAIKey = useAtomValue(openAIKeyAtom)
+  const enableExperimental = useAtomValue(experimentalFeaturesAtom)
 
   const [summaryModel, setSummaryModel] = React.useState<Model>(models[0])
   const [summaryPrompt, setSummaryPrompt] = React.useState<Prompt>(prompts[0])
@@ -58,57 +61,135 @@ export function SummaryProvider({ children }: SummaryProviderProps) {
     return text;
   };
 
-  async function generateSummary(e: any) {
+  const generateSummary = async (e) => {
+    e?.preventDefault()
+    console.log("[Summary] Generating summary with model:", summaryModel.value)
+    try {
+      if(FEATURES.O1_MODEL.enabled && summaryModel.value === "o1-mini") {
+        await generateAnalyticSummary()
+      } else {
+        await generateLegacySummary()
+      }
+    } catch (error) {
+      console.error("[Summary] Generation failed:", error)
+      setSummaryIsError(true)
+      setSummaryIsGenerating(false)
+      setSummaryContent(`Error: ${error.message}`)
+    }
+  }
+
+  async function generateAnalyticSummary() {
+    console.log("[Summary] Generating analytic summary")
+    
+    if (summaryContent !== null) {
+      setSummaryContent(null)
+    }
+
+    if (!extensionData?.transcript) {
+      const error = "No transcript available"
+      console.error("[Summary]", error)
+      setSummaryIsError(true)
+      setSummaryContent(`Error: ${error}`)
+      return
+    }
+
+    setSummaryIsGenerating(true)
+    setSummaryIsError(false)
+
+    const transcriptText = extensionData.transcript.events
+      .filter((x: { segs: any }) => x.segs)
+      .map((x: { segs: any[] }) => x.segs.map((y: { utf8: any }) => y.utf8).join(" "))
+      .join(" ")
+      .replace(/[\u200B-\u200D\uFEFF]/g, "")
+      .replace(/\s+/g, " ");
+
+    try {
+      console.log("[Summary] Sending analytic summary request")
+      port.send({
+        prompt: summaryPrompt.content,
+        model: "o1-mini",
+        context: {
+          ...extensionData,
+          openAIKey
+        }
+      })
+    } catch (error) {
+      console.error("[Summary] Failed to send analytic summary request:", error)
+      setSummaryIsError(true)
+      setSummaryIsGenerating(false)
+      setSummaryContent(`Error: ${error.message}`)
+    }
+  }
+
+  async function generateLegacySummary() {
     console.log("Function That Generates Summary Called")
-    e.preventDefault()
 
     if (summaryContent !== null) {
       setSummaryContent(null)
     }
 
+    if (!extensionData?.transcript) {
+      setSummaryIsError(true)
+      return
+    }
+
     setSummaryIsGenerating(true)
     setSummaryIsError(false)
-    const parsed = summarizeContext(summaryContent || '')
-    const finalPrompt = `${summaryPrompt.content}\nContext: ${summarizeContext(parsed)}`
-    port.send({
-      prompt: finalPrompt,
-      model: summaryModel.content,
-      context: {
-        ...extensionData,
-        openAIKey,
-        memory: getRelevantMemories()
-      }
-    })
+
+    const transcriptText = extensionData.transcript.events
+      .filter((x: { segs: any }) => x.segs)
+      .map((x: { segs: any[] }) => x.segs.map((y: { utf8: any }) => y.utf8).join(" "))
+      .join(" ")
+      .replace(/[\u200B-\u200D\uFEFF]/g, "")
+      .replace(/\s+/g, " ");
+
+    const finalPrompt = `${summaryPrompt.content}\n\nTranscript:\n${summarizeContext(transcriptText)}`
+    
+    try {
+      port.send({
+        prompt: finalPrompt,
+        model: summaryModel.value,
+        context: {
+          ...extensionData,
+          openAIKey
+        }
+      })
+    } catch (error) {
+      setSummaryIsError(true)
+      setSummaryIsGenerating(false)
+    }
   }
+
+  React.useEffect(() => {
+    console.log("[Summary] Port data received:", port.data)
+    if (!port.data) return;
+
+    if (port.data.error) {
+      console.error("[Summary] Error from port:", port.data.error)
+      setSummaryIsError(true)
+      setSummaryContent(`Error generating summary:\n\n${port.data.error}`)
+      setSummaryIsGenerating(false)
+      return
+    }
+
+    if (port.data.message !== undefined) {
+      if (port.data.isEnd) {
+        console.log("[Summary] Generation completed")
+        setSummaryIsGenerating(false)
+        if (port.data.message !== "END") {
+          setSummaryContent(port.data.message)
+        }
+      } else {
+        setSummaryContent(port.data.message)
+      }
+    }
+  }, [port.data])
 
   React.useEffect(() => {
     setSummaryContent(null)
     setSummaryIsGenerating(false)
     setSummaryIsError(false)
   }, [extensionLoading])
-
-  React.useEffect(() => {
-    console.log("Use Effect That Streams Summary Called")
-    if (port.data?.message !== undefined && port.data.isEnd === false) {
-      setSummaryContent(port.data.message)
-    } else {
-      console.log("End of message")
-      console.log(port.data?.message)
-      setSummaryIsGenerating(false)
-    }
-
-    setSummaryIsError(false)
-  }, [port.data?.message])
-
-  React.useEffect(() => {
-    console.log("Use Effect That Streams Summary Error Called")
-    if (port.data?.error !== undefined && port.data?.error !== null) {
-      setSummaryIsError(true)
-      setSummaryContent(null)
-    } else {
-      setSummaryIsError(false)
-    }
-  }, [port.data?.error])
 
   const value = {
     summaryModel,
