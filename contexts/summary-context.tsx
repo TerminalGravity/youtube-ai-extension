@@ -49,6 +49,15 @@ export function SummaryProvider({ children }: SummaryProviderProps) {
 
   // functions to be used in the context
 
+  const MAX_CONTEXT_LENGTH = 4000; // tokens
+  const summarizeContext = (text: string) => {
+    if (text.length > MAX_CONTEXT_LENGTH) {
+      return text.slice(0, MAX_CONTEXT_LENGTH) + 
+        '\n[Context truncated. Full analysis available in detailed report]';
+    }
+    return text;
+  };
+
   async function generateSummary(e: any) {
     console.log("Function That Generates Summary Called")
     e.preventDefault()
@@ -59,10 +68,16 @@ export function SummaryProvider({ children }: SummaryProviderProps) {
 
     setSummaryIsGenerating(true)
     setSummaryIsError(false)
+    const parsed = summarizeContext(summaryContent || '')
+    const finalPrompt = `${summaryPrompt.content}\nContext: ${summarizeContext(parsed)}`
     port.send({
-      prompt: summaryPrompt.content,
+      prompt: finalPrompt,
       model: summaryModel.content,
-      context: { ...extensionData, openAIKey }
+      context: {
+        ...extensionData,
+        openAIKey,
+        memory: getRelevantMemories()
+      }
     })
   }
 

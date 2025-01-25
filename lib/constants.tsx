@@ -72,6 +72,22 @@ Please ensure that the summary, bullet points, and explanations fit within the 3
     value: "prompt-one",
     label: "Prompt Two",
     content: "Give me a summary of this video"
+  },
+  {
+    value: "elon",
+    label: "Elon (First Principles)",
+    content: `Analyze this video transcript through first principles reasoning. Break down complex concepts into fundamental truths, then reconstruct with logical iterations. Highlight potential innovations and technical implications.`
+  },
+  {
+    value: "academic",
+    label: "Academic (Peer Review)",
+    content: `Produce a rigorous academic analysis following structure: 
+    1. Abstract (150 words)
+    2. Key Contributions
+    3. Methodology Assessment
+    4. Limitations
+    5. Future Research Directions
+    Maintain formal tone with proper citations.`
   }
 ]
 
@@ -92,6 +108,12 @@ export const models: Model[] = [
     value: "GPT-4o",
     label: "GPT-4o",
     content: "gpt-4o",
+    icon: <IconOpenAI className="h-4 w-4 opacity-70" />
+  },
+  {
+    value: "o1-mini",
+    label: "o1-mini (Analytic)",
+    content: "o1-mini",
     icon: <IconOpenAI className="h-4 w-4 opacity-70" />
   }
 ]

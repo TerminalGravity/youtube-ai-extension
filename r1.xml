@@ -1,0 +1,39 @@
+<purpose>
+Add OpenAI o1-mini model to model selection and implement persona-based prompt templates for summary feature.
+</purpose>
+
+<planning_rules>
+1. Update model configuration to include o1-mini
+2. Add persona-based prompts (Elon, Academic, Casual)
+3. Implement template selection in summary context
+4. Ensure backward compatibility
+5. Files to modify:
+   - lib/constants.tsx
+   - contexts/summary-context.tsx  
+   - components/summary-actions.tsx
+   - components/summary-content.tsx
+</planning_rules>
+
+<format_rules>
+1. Maintain existing GPT model functionality
+2. Make persona prompts configurable and extensible
+3. Minimize performance overhead for o1-mini
+4. Handle errors gracefully
+5. Support reverting to default prompts
+</format_rules>
+
+<output>
+1. Model Selection:
+   - Add o1-mini to dropdown with existing models (GPT-3.5, GPT-4)
+   
+2. Prompt Templates:
+   - Elon persona: Tech/innovation focused summary
+   - Academic persona: Formal academic tone
+   - Casual persona: Conversational style
+   
+3. Testing Requirements:
+   - Verify Summary panel updates
+   - Validate persona outputs
+   - Test prompt reversion
+   - Confirm error handling
+</output>

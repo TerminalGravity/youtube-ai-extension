@@ -99,3 +99,8 @@ This project wouldn't be possible without the following resources:
 - [Chrome Extension Documentation](https://developer.chrome.com/docs/extensions/)
 
 
+Key considerations from OpenAI docs1:
+o1-mini requires explicit reasoning steps
+Works best with structured prompts
+Supports longer context windows (up to 16k tokens)
+Benefits from explicit confidence scoring

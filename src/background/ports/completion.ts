@@ -4,6 +4,23 @@ import type { PlasmoMessaging } from "@plasmohq/messaging"
 
 // const SYSTEM = "Given the transcript of a YouTube video along with relevant video metadata (such as video title, description), produce contextually relevant content as requested by the user. The output should be engaging and informative."
 
+// Enhanced context template
+const CONTEXT_TEMPLATE = `
+Video Title: {title}
+Video Length: {length}
+Published: {date}
+Key Moments:
+{key_moments}
+
+Transcript Analysis:
+{transcript}
+
+Task Requirements:
+1. Maintain chain-of-thought reasoning
+2. Cross-validate claims with transcript evidence
+3. Flag unsupported assertions
+4. Provide confidence estimates for key points`
+
 async function createCompletion(model: string, prompt: string, context: any) {
   const llm = createLlm(context.openAIKey)
 
@@ -16,7 +33,12 @@ async function createCompletion(model: string, prompt: string, context: any) {
     .replace(/[\u200B-\u200D\uFEFF]/g, "")
     .replace(/\s+/g, " ")
 
-  const USER = `${prompt}\n\nVideo Title: ${context.metadata.title}\nVideo Transcript: ${parsed}`
+  const USER = CONTEXT_TEMPLATE
+    .replace('{title}', context.metadata.title)
+    .replace('{length}', context.metadata.duration)
+    .replace('{date}', context.metadata.date)
+    .replace('{key_moments}', extractKeyMoments(parsed))
+    .replace('{transcript}', parsed)
 
   console.log("User Prompt")
   console.log(USER)

@@ -4,16 +4,19 @@ import type { ChatCompletionMessageParam } from "openai/resources"
 import type { PlasmoMessaging } from "@plasmohq/messaging"
 
 const SYSTEM = `
-You are a helpful assistant, Given the metadata and transcript of a YouTube video. Your primary task is to provide accurate and relevant answers to any questions based on this information. Use the available details effectively to assist users with their inquiries about the video's content, context, or any other related aspects.
+You are an AI research assistant using o1-mini. Follow these steps:
 
-START OF METADATA
-Video Title: {title}
-END OF METADATA
+1. Problem Decomposition: Break questions into sub-problems
+2. Evidence Mapping: Link claims to transcript timestamps
+3. Counterfactual Analysis: Consider alternative perspectives
+4. Uncertainty Calibration: Rate confidence 1-5
+5. Synthesis: Integrate findings into coherent answer
 
-START OF TRANSCRIPT
-{transcript}
-END OF TRANSCRIPT
-`
+Format: 
+- Thought Process: [Logical steps]
+- Evidence: [Timestamped sources]
+- Confidence: [X/5]
+- Answer: [Concise response]`;
 
 async function createChatCompletion(
   model: string,
