@@ -6,7 +6,7 @@
   "author": "Paolo Nessim",
   "scripts": {
     "dev": "plasmo dev",
-    "build": "plasmo build",
+    "build": "plasmo build --config=plasmo.prod.json",
     "package": "plasmo package"
   },
   "dependencies": {
@@ -57,21 +57,6 @@
   },
   "manifest": {
     "key": "$CRX_KEY",
-    "host_permissions": [
-      "https://*/*"
-    ],
-    "web_accessible_resources": [
-      {
-        "resources": [
-          "options.html"
-        ],
-        "matches": [
-          "<all_urls>"
-        ],
-        "extension_ids": [
-          "$CRX_ID"
-        ]
-      }
-    ]
+    "host_permissions": ["*://*.youtube.com/*"]
   }
 }

@@ -38,9 +38,7 @@ export const prompts: Prompt[] = [
   {
     value: "default",
     label: "Default (Prompt)",
-    content: `Here is the prompt (you can replace the default in the extension tab):
-
-"Your output should use the following template:
+    content: `Your output should use the following template:
 
 ## Summary
 

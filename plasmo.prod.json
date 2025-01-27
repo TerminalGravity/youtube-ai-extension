@@ -1,7 +1,7 @@
 {
   "manifest": {
-    "name": "YouTube AI (Test)",
-    "version": "0.0.1-test",
+    "name": "YouTube AI",
+    "version": "0.0.1",
     "permissions": [
       "storage",
       "activeTab",
@@ -11,13 +11,12 @@
     "host_permissions": ["*://*.youtube.com/*"],
     "web_accessible_resources": [
       {
-        "resources": ["test.html", "*.js", "*.css"],
+        "resources": ["options.html", "*.js", "*.css"],
         "matches": ["<all_urls>"]
       }
     ],
     "content_security_policy": {
-      "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'",
-      "sandbox": "allow-scripts allow-forms allow-popups allow-modals allow-storage-access-by-user-activation"
+      "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
     },
     "background": {
       "service_worker": "background.js",
